@@ -173,6 +173,6 @@ dist フォルダーが作られて、 mdlDecrypt.exe が出力される。
 
 ### Virustotal
 
-![virustotal](https://github.com/khttemp/dend-mdlbin-editor/blob/main/image/virustotal.png)
+![virustotal](https://github.com/khttemp/dend-mdlinfo-editor/blob/main/image/virustotal.png)
 
 以上。
