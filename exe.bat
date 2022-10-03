@@ -1,0 +1,1 @@
+pyinstaller mdlInfoMain.py --onefile --noconsole
