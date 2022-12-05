@@ -633,6 +633,7 @@ class BinFileOrFlagEditDialog(sd.Dialog):
     def __init__(self, master, title, num, decryptFile):
         self.smfNum = num
         self.decryptFile = decryptFile
+        self.smfName = decryptFile.allInfoList[self.smfNum]["smfName"]
         self.binFile = decryptFile.allInfoList[self.smfNum]["binInfo"][0]
         self.flag = decryptFile.allInfoList[self.smfNum]["binInfo"][1]
         self.dirtyFlag = False
@@ -640,19 +641,26 @@ class BinFileOrFlagEditDialog(sd.Dialog):
     def body(self, master):
         self.fontSize = 12
         self.entryWidth = 20
+        self.smfNameLb = ttk.Label(master, text="smf名")
+        self.smfNameLb.grid(row=0, column=0, sticky=W+E)
+        self.v_smfName = StringVar()
+        self.v_smfName.set(self.smfName)
+        self.smfNameEt = ttk.Entry(master, font=("", self.fontSize), textvariable=self.v_smfName, width=self.entryWidth)
+        self.smfNameEt.grid(row=0, column=1, sticky=W+E)
+        
         self.binFileLb = ttk.Label(master, text="binファイル")
-        self.binFileLb.grid(row=0, column=0, sticky=W+E)
+        self.binFileLb.grid(row=1, column=0, sticky=W+E)
         self.v_binFile = StringVar()
         self.v_binFile.set(self.binFile)
         self.binFileEt = ttk.Entry(master, font=("", self.fontSize), textvariable=self.v_binFile, width=self.entryWidth)
-        self.binFileEt.grid(row=0, column=1, sticky=W+E)
+        self.binFileEt.grid(row=1, column=1, sticky=W+E)
 
         self.flagLb = ttk.Label(master, text="フラグ")
-        self.flagLb.grid(row=1, column=0, sticky=W+E)
+        self.flagLb.grid(row=2, column=0, sticky=W+E)
         self.v_flag = IntVar()
         self.v_flag.set(self.flag)
         self.flagEt = ttk.Entry(master, font=("", self.fontSize), textvariable=self.v_flag, width=self.entryWidth)
-        self.flagEt.grid(row=1, column=1, sticky=W+E)
+        self.flagEt.grid(row=2, column=1, sticky=W+E)
 
     def validate(self):
         warnMsg = "binファイル、フラグ情報を修正しますか？"
@@ -660,6 +668,10 @@ class BinFileOrFlagEditDialog(sd.Dialog):
 
         if result:
             varList = []
+            if not self.v_smfName.get():
+                mb.showerror(title="エラー", message="smf名が空文字です")
+                return False
+            varList.append(self.v_smfName.get())
             varList.append(self.v_binFile.get())
             varList.append(self.v_flag.get())
 
@@ -716,3 +728,41 @@ class CopyMdlDialog(sd.Dialog):
     def apply(self):
         self.dirtyFlag = True
         
+class PasteDialog(sd.Dialog):
+    def __init__(self, master, title, decryptFile, num, copyInfoByteArr):
+        self.decryptFile = decryptFile
+        self.num = num
+        self.copyInfoByteArr = copyInfoByteArr
+        self.reloadFlag = False
+        super(PasteDialog, self).__init__(parent=master, title=title)
+    def body(self, master):
+        self.resizable(False, False)
+        self.posLb = ttk.Label(master, text="挿入する位置を選んでください", font=("", 14))
+        self.posLb.pack(padx=10, pady=10)
+    def buttonbox(self):
+        box = Frame(self, padx=5, pady=5)
+        self.frontBtn = Button(box, text="前", font=("", 12), width=10, command=self.frontInsert)
+        self.frontBtn.grid(row=0, column=0, padx=5)
+        self.backBtn = Button(box, text="後", font=("", 12), width=10, command=self.backInsert)
+        self.backBtn.grid(row=0, column=1, padx=5)
+        self.cancelBtn = Button(box, text="Cancel", font=("", 12), width=10, command=self.cancel)
+        self.cancelBtn.grid(row=0, column=2, padx=5)
+        box.pack()
+    def frontInsert(self):
+        if not self.decryptFile.copySaveFile(self.num - 1, self.copyInfoByteArr):
+            self.decryptFile.printError()
+            errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
+            mb.showerror(title="保存エラー", message=errorMsg)
+            return
+        self.ok()
+        mb.showinfo(title="成功", message="貼り付けしました")
+        self.reloadFlag = True
+    def backInsert(self):
+        if not self.decryptFile.copySaveFile(self.num, self.copyInfoByteArr):
+            self.decryptFile.printError()
+            errorMsg = "保存に失敗しました。\nファイルが他のプログラムによって開かれている\nまたは権限問題の可能性があります"
+            mb.showerror(title="保存エラー", message=errorMsg)
+            return
+        self.ok()
+        mb.showinfo(title="成功", message="貼り付けしました")
+        self.reloadFlag = True

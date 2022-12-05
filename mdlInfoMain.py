@@ -3,6 +3,7 @@ from importPy.tkinterClass import *
 
 decryptFile = None
 frame = None
+copyInfoByteArr = None
 
 def openFile():
     global decryptFile
@@ -43,7 +44,7 @@ def createWidget():
     global mdlInfoLf
     global frame
 
-    btnList = [getMdlDetailBtn, getMdlImageBtn, getSmfDetailBtn, getBinOrFlagBtn, deleteMdlInfoBtn]
+    btnList = [getMdlDetailBtn, getMdlImageBtn, getSmfDetailBtn, getBinOrFlagBtn, deleteMdlInfoBtn, copyInfoBtn]
 
     frame = Scrollbarframe(mdlInfoLf, v_select, btnList)
 
@@ -187,9 +188,43 @@ def deleteMdlInfo():
         num -= 1
         if num >= 0:
             frame.tree.selection_set(num)
+        else:
+            frame.tree.selection_set(0)
+
+def copyInfo():
+    global frame
+    global decryptFile
+    global copyInfoByteArr
+    selectId = int(frame.tree.selection()[0])
+    selectItem = frame.tree.set(selectId)
+    num = int(selectItem["番号"])-1
+    index = decryptFile.allInfoList[num]["smfIndex"]
+    if num + 1 < len(decryptFile.allInfoList):
+        nextIndex = decryptFile.allInfoList[num + 1]["smfIndex"]
+        copyInfoByteArr = decryptFile.byteArr[index:nextIndex]
+    else:
+        copyInfoByteArr = decryptFile.byteArr[index:]
+
+    mb.showinfo(title="成功", message="コピーしました")
+    pasteInfoBtn["state"] = "normal"
+
+def pasteInfo():
+    global decryptFile
+    global frame
+    global copyInfoByteArr
+    selectId = frame.tree.selection()[0]
+    selectItem = frame.tree.set(selectId)
+    num = int(selectItem["番号"])
+    result = PasteDialog(root, "MDLINFO情報コピー", decryptFile, num, copyInfoByteArr)
+    if result.reloadFlag:
+        decryptFile = decryptFile.reload()
+        for i in frame.tree.get_children():
+            frame.tree.delete(i)
+        viewData(decryptFile.allInfoList)
+        frame.tree.selection_set(num)
 
 root = Tk()
-root.title("電車でD MDLINFO 改造 1.0.0")
+root.title("電車でD MDLINFO 改造 1.1.0")
 root.geometry("960x640")
 
 menubar = Menu(root)
@@ -227,5 +262,11 @@ copyAnotherBtn.place(relx=0.55, rely=0.11)
 
 deleteMdlInfoBtn = ttk.Button(root, text="選択したモデル情報を削除する", width=25, state="disabled", command=deleteMdlInfo)
 deleteMdlInfoBtn.place(relx=0.78, rely=0.11)
+
+copyInfoBtn = ttk.Button(root, text="選択した行をコピーする", width=25, state="disabled", command=copyInfo)
+copyInfoBtn.place(relx=0.32, rely=0.19)
+
+pasteInfoBtn = ttk.Button(root, text="選択した行に貼り付けする", width=25, state="disabled", command=pasteInfo)
+pasteInfoBtn.place(relx=0.55, rely=0.19)
 
 root.mainloop()

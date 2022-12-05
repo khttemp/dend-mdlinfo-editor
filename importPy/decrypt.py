@@ -290,12 +290,22 @@ class MdlDecrypt:
 
     def updateBinFileOrFlag(self, smfNum, valueList):
         try:
-            index = self.allInfoList[smfNum]["binInfoIndex"]
+            index = self.allInfoList[smfNum]["smfIndex"]
             newByteArr = self.byteArr[0:index]
-
             newByteArr.append(len(valueList[0]))
             newByteArr.extend(valueList[0].encode("shift-jis"))
-            h = struct.pack("<h", valueList[1])
+            
+            oldLen = self.byteArr[index]
+            index += 1
+            index += oldLen
+            startIdx = index
+            
+            index = self.allInfoList[smfNum]["binInfoIndex"]
+            newByteArr.extend(self.byteArr[startIdx:index])
+
+            newByteArr.append(len(valueList[1]))
+            newByteArr.extend(valueList[1].encode("shift-jis"))
+            h = struct.pack("<h", valueList[2])
             newByteArr.extend(h)
 
             binFileLen = self.byteArr[index]
@@ -346,10 +356,36 @@ class MdlDecrypt:
             newByteArr.extend(self.byteArr[index:smfIndex])
 
             num += 1
-            if smfIndex < len(self.allInfoList):
+            if num < len(self.allInfoList):
                 smfNextIndex = self.allInfoList[num]["smfIndex"]
                 newByteArr.extend(self.byteArr[smfNextIndex:])
             
+            self.save(newByteArr)
+            return True
+        except Exception as e:
+            self.error = str(e)
+            return False
+
+    def copySaveFile(self, num, copyByteArr):
+        try:
+            index = 16
+            newByteArr = self.byteArr[0:index]
+            allcnt = struct.unpack("<h", self.byteArr[index:index+2])[0]
+            index += 2
+
+            allcnt += 1
+            h = struct.pack("<h", allcnt)
+            newByteArr.extend(h)
+
+            smfIndex = self.allInfoList[num]["smfIndex"]
+            newByteArr.extend(self.byteArr[index:smfIndex])
+
+            newByteArr.extend(copyByteArr)
+            
+            if num < len(self.allInfoList):
+                smfNextIndex = self.allInfoList[num]["smfIndex"]
+                newByteArr.extend(self.byteArr[smfNextIndex:])
+
             self.save(newByteArr)
             return True
         except Exception as e:
