@@ -1,6 +1,5 @@
 import struct
-import codecs
-import os
+
 
 class MdlDecrypt:
     def __init__(self, filePath):
@@ -20,22 +19,22 @@ class MdlDecrypt:
         except Exception as e:
             self.error = str(e)
             return False
-        
+
     def printError(self):
         f = open("error_log.txt", "w")
         f.write(self.error)
         f.close()
-        
+
     def decrypt(self, line):
         self.allInfoList = []
         self.error = ""
-        
+
         index = 16
         header = line[0:index].decode("shift-jis")
         if header != "MDL_INFO_VER_100":
             raise Exception
 
-        allcnt = struct.unpack("<h", line[index:index+2])[0]
+        allcnt = struct.unpack("<h", line[index:index + 2])[0]
         index += 2
 
         for i in range(allcnt):
@@ -43,7 +42,7 @@ class MdlDecrypt:
             mdlInfo["smfIndex"] = index
             smfLen = line[index]
             index += 1
-            smfName = line[index:index+smfLen].decode("shift-jis")
+            smfName = line[index:index + smfLen].decode("shift-jis")
             index += smfLen
             mdlInfo["smfName"] = smfName
 
@@ -53,7 +52,7 @@ class MdlDecrypt:
             for j in range(mdlcnt):
                 detailMdlInfo = {}
                 detailMdlInfo["detailImgIndex"] = index
-                
+
                 b = struct.unpack("<b", line[index].to_bytes(1, "big"))[0]
                 detailMdlInfo["colorCnt"] = b
                 index += 1
@@ -62,7 +61,7 @@ class MdlDecrypt:
                     for k in range(b):
                         imgLen = line[index]
                         index += 1
-                        imgName = line[index:index+imgLen].decode("shift-jis")
+                        imgName = line[index:index + imgLen].decode("shift-jis")
                         index += imgLen
                         detailMdlInfo["textureImgList"].append(imgName)
 
@@ -74,30 +73,30 @@ class MdlDecrypt:
                     index += 1
 
                 for k in range(4):
-                    f = struct.unpack("<f", line[index:index+4])[0]
+                    f = struct.unpack("<f", line[index:index + 4])[0]
                     f = round(f, 5)
                     detailMdlInfo["textureList"].append(f)
                     index += 4
 
                 detailMdlInfo["textureList"].append(line[index])
                 index += 1
-                
+
                 for k in range(3):
-                    f = struct.unpack("<f", line[index:index+4])[0]
+                    f = struct.unpack("<f", line[index:index + 4])[0]
                     f = round(f, 5)
                     detailMdlInfo["textureList"].append(f)
                     index += 4
-                    
+
                 b = struct.unpack("<b", line[index].to_bytes(1, "big"))[0]
                 detailMdlInfo["textureList"].append(b)
                 index += 1
-                
-                h = struct.unpack("<h", line[index:index+2])[0]
+
+                h = struct.unpack("<h", line[index:index + 2])[0]
                 detailMdlInfo["textureList"].append(h)
                 index += 2
 
                 mdlInfo["detailMdlList"].append(detailMdlInfo)
-                
+
             mdlInfo["imgList"] = []
             mdlInfo["imgIndex"] = index
             imgCnt = struct.unpack("<b", line[index].to_bytes(1, "big"))[0]
@@ -106,7 +105,7 @@ class MdlDecrypt:
                 for j in range(imgCnt):
                     imgLen = line[index]
                     index += 1
-                    imgName = line[index:index+imgLen].decode("shift-jis")
+                    imgName = line[index:index + imgLen].decode("shift-jis")
                     index += imgLen
                     mdlInfo["imgList"].append(imgName)
 
@@ -118,15 +117,15 @@ class MdlDecrypt:
                 smfDetailInfo = {}
                 smfDetailInfo["smfDetailIndex"] = index
                 smfDetailInfo["smfDetail"] = []
-                
+
                 mdlLen = line[index]
                 index += 1
-                mdlName = line[index:index+mdlLen].decode("shift-jis")
+                mdlName = line[index:index + mdlLen].decode("shift-jis")
                 index += mdlLen
                 smfDetailInfo["smfDetail"].append(mdlName)
 
                 for k in range(6):
-                    f = struct.unpack("<f", line[index:index+4])[0]
+                    f = struct.unpack("<f", line[index:index + 4])[0]
                     f = round(f, 5)
                     smfDetailInfo["smfDetail"].append(f)
                     index += 4
@@ -136,19 +135,19 @@ class MdlDecrypt:
             mdlInfo["binInfoIndex"] = index
             binFileLen = line[index]
             index += 1
-            binFileName = line[index:index+binFileLen].decode("shift-jis")
+            binFileName = line[index:index + binFileLen].decode("shift-jis")
             mdlInfo["binInfo"].append(binFileName)
             index += binFileLen
 
-            h = struct.unpack("<h", line[index:index+2])[0]
+            h = struct.unpack("<h", line[index:index + 2])[0]
             index += 2
             mdlInfo["binInfo"].append(h)
 
             self.allInfoList.append(mdlInfo)
+
     def updateTexImage(self, smfNum, detailInfoNum, imgList):
         try:
             index = self.allInfoList[smfNum]["detailMdlList"][detailInfoNum]["detailImgIndex"]
-            line = self.byteArr
             newByteArr = self.byteArr[0:index]
 
             newByteArr.append(len(imgList))
@@ -174,7 +173,6 @@ class MdlDecrypt:
     def updateTex(self, smfNum, detailInfoNum, varList):
         try:
             index = self.allInfoList[smfNum]["detailMdlList"][detailInfoNum]["detailTexIndex"]
-            line = self.byteArr
             index += 2
             newByteArr = self.byteArr[0:index]
 
@@ -222,7 +220,6 @@ class MdlDecrypt:
     def updateImage(self, smfNum, imgList):
         try:
             index = self.allInfoList[smfNum]["imgIndex"]
-            line = self.byteArr
             newByteArr = self.byteArr[0:index]
 
             newByteArr.append(len(imgList))
@@ -250,18 +247,18 @@ class MdlDecrypt:
             newByteArr = bytearray()
             smfCntIndex = self.allInfoList[smfNum]["smfDetailListIndex"]
             index = 0
-            
+
             if pos == 1:
                 smfDetailNum += 1
-                
+
             if smfDetailNum >= len(self.allInfoList[smfNum]["smfDetailList"]):
                 index = self.allInfoList[smfNum]["binInfoIndex"]
             else:
                 index = self.allInfoList[smfNum]["smfDetailList"][smfDetailNum]["smfDetailIndex"]
-                
+
             newByteArr = self.byteArr[0:index]
 
-            if valueList != None:
+            if valueList is not None:
                 newByteArr.append(len(valueList[0]))
                 newByteArr.extend(valueList[0].encode("shift-jis"))
                 for v in valueList[1:]:
@@ -275,13 +272,13 @@ class MdlDecrypt:
             else:
                 newByteArr[smfCntIndex] -= 1
                 smfDetailNum += 1
-                
+
             if smfDetailNum >= len(self.allInfoList[smfNum]["smfDetailList"]):
                 index = self.allInfoList[smfNum]["binInfoIndex"]
             else:
                 index = self.allInfoList[smfNum]["smfDetailList"][smfDetailNum]["smfDetailIndex"]
             newByteArr.extend(self.byteArr[index:])
-                
+
             self.save(newByteArr)
             return True
         except Exception as e:
@@ -294,12 +291,12 @@ class MdlDecrypt:
             newByteArr = self.byteArr[0:index]
             newByteArr.append(len(valueList[0]))
             newByteArr.extend(valueList[0].encode("shift-jis"))
-            
+
             oldLen = self.byteArr[index]
             index += 1
             index += oldLen
             startIdx = index
-            
+
             index = self.allInfoList[smfNum]["binInfoIndex"]
             newByteArr.extend(self.byteArr[startIdx:index])
 
@@ -325,9 +322,9 @@ class MdlDecrypt:
         try:
             index = 16
             newByteArr = self.byteArr[0:index]
-            allcnt = struct.unpack("<h", self.byteArr[index:index+2])[0]
+            allcnt = struct.unpack("<h", self.byteArr[index:index + 2])[0]
             index += 2
-            
+
             allcnt += 1
             h = struct.pack("<h", allcnt)
             newByteArr.extend(h)
@@ -345,9 +342,9 @@ class MdlDecrypt:
         try:
             index = 16
             newByteArr = self.byteArr[0:index]
-            allcnt = struct.unpack("<h", self.byteArr[index:index+2])[0]
+            allcnt = struct.unpack("<h", self.byteArr[index:index + 2])[0]
             index += 2
-            
+
             allcnt -= 1
             h = struct.pack("<h", allcnt)
             newByteArr.extend(h)
@@ -359,7 +356,7 @@ class MdlDecrypt:
             if num < len(self.allInfoList):
                 smfNextIndex = self.allInfoList[num]["smfIndex"]
                 newByteArr.extend(self.byteArr[smfNextIndex:])
-            
+
             self.save(newByteArr)
             return True
         except Exception as e:
@@ -370,7 +367,7 @@ class MdlDecrypt:
         try:
             index = 16
             newByteArr = self.byteArr[0:index]
-            allcnt = struct.unpack("<h", self.byteArr[index:index+2])[0]
+            allcnt = struct.unpack("<h", self.byteArr[index:index + 2])[0]
             index += 2
 
             allcnt += 1
@@ -381,7 +378,7 @@ class MdlDecrypt:
             newByteArr.extend(self.byteArr[index:smfIndex])
 
             newByteArr.extend(copyByteArr)
-            
+
             if num < len(self.allInfoList):
                 smfNextIndex = self.allInfoList[num]["smfIndex"]
                 newByteArr.extend(self.byteArr[smfNextIndex:])
@@ -391,11 +388,11 @@ class MdlDecrypt:
         except Exception as e:
             self.error = str(e)
             return False
-    
+
     def reload(self):
         self.open()
         return self
-        
+
     def save(self, newByteArr):
         self.byteArr = newByteArr
         w = open(self.filePath, "wb")

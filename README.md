@@ -111,9 +111,9 @@ SMFに定義されている要素を編集できる
 以下の環境で、ソースコード版の動作確認を行った
 
 * OS: Windows 10 64bit
-* Python 3.7.9 64bit
-* pip 21.2.4 64bit
-* PyInstaller 3.4 64bit
+* Python 3.10.9 64bit
+* pip 22.3.1 64bit
+* Nuitka 1.3.7 64bit
 * 横960×縦640ピクセル以上の画面解像度があるコンピュータ
 
 ### ソースコードの直接実行
@@ -168,16 +168,15 @@ Windows であれば以下のコマンドを入力する。
 
 ### Windows 版実行バイナリ（ .exeファイル ）の作成方法
 
-pyinstaller か py2exe ライブラリをインストールする。 pip でも  easy_install  でも構わない。
+pyinstaller か Nuitka ライブラリをインストールする。 pip でも  easy_install  でも構わない。
 
-下は、 pyinstaller を使用して、Windows 版実行バイナリ（ .exeファイル ）を作る例である。
+下は、 Nuitka を使用して、Windows 版実行バイナリ（ .exeファイル ）を作る例である。
 
 ````
-> pyinstaller mdlInfoMain.py --onefile
-（ コンソール出力は省略 ）
+> nuitka --mingw64 --onefile --enable-plugin=tk-inter --follow-imports --remove-output --disable-console mdlInfoMain.py
 ````
 
-dist フォルダーが作られて、 mdlDecrypt.exe が出力される。
+mdlInfoMain.exe が出力される。
 
 ### Virustotal
 
